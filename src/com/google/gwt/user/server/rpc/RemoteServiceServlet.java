@@ -41,6 +41,11 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
     implements SerializationPolicyProvider {
 
   /**
+	 * 
+	 */
+	private static final long serialVersionUID = 721051860112454827L;
+
+/**
    * Used by HybridServiceServlet.
    */
   static SerializationPolicy loadSerializationPolicy(HttpServlet servlet,

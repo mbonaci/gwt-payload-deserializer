@@ -24,7 +24,7 @@ import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.google.gwt.user.server.rpc.SerializationPolicyProvider;
 
-import hr.infodom.gwt.util.PayloadDeserializer;
+import hr.ecs.gwt.util.PayloadDeserializer;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -668,7 +668,6 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 			PayloadDeserializer.appendToFile("\t" + s.substring(s.lastIndexOf('.') + 1) + ".");
 			PayloadDeserializer.appendToFile(declField.getName()+ "\t\t");
 //			PayloadDeserializer.appendToFile("\t\t" + declField.getType().getName() + "\ttab\t");
-			// TODO samo iza zadnje tocke, ako je ima
 			PayloadDeserializer.appendToFile("\t" + (value == null ? "null" : value.toString()));
 //			PayloadDeserializer.appendToFile("###################################################\n\n");
 

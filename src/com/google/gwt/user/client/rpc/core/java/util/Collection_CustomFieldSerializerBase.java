@@ -19,7 +19,7 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
-import hr.infodom.gwt.util.PayloadDeserializer;
+import hr.ecs.gwt.util.PayloadDeserializer;
 
 import java.util.Collection;
 
