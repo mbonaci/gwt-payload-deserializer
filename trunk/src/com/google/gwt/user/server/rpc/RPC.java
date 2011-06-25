@@ -24,7 +24,7 @@ import com.google.gwt.user.server.rpc.impl.LegacySerializationPolicy;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamWriter;
 
-import hr.infodom.gwt.util.PayloadDeserializer;
+import hr.ecs.gwt.util.PayloadDeserializer;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
