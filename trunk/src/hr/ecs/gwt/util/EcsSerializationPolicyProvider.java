@@ -21,8 +21,8 @@ import com.google.gwt.user.server.rpc.SerializationPolicyProvider;
 public class EcsSerializationPolicyProvider implements SerializationPolicyProvider {
 
 	private String payload;
-	
-	
+
+
 	public EcsSerializationPolicyProvider(String payload) {
 		this.payload = payload;
 	}
@@ -30,31 +30,37 @@ public class EcsSerializationPolicyProvider implements SerializationPolicyProvid
 
 	@Override
 	public SerializationPolicy getSerializationPolicy(String moduleBaseURL, String serializationPolicyStrongName) {
+
+		// If there's currently no access to the application server, i.e. to a URL listed in payload, don't try to access it
+		if(!PayloadDeserializer.IS_SERVER_ACCESSIBLE){
+			return null;
+		}
+
 		if(payload.length() == 0){
 			System.out.println("GWT Payload has to be sent as the first parameter!");
 			return null;
 		}
 		try {
 			RemoteServiceServlet rss = new RemoteServiceServlet();
-			
-			// first get the serialization whitelist from the server
+
+			// get the serialization whitelist from the server
 			String[] elems = payload.split("\\|");
 			String uri = elems[3].concat(elems[4]).concat(".gwt.rpc");
 			HttpClient httpClient = new DefaultHttpClient();
-			
+
 			HttpUriRequest req = new HttpGet(uri);
 			HttpResponse resp;
-	
+
 			resp = httpClient.execute(req);
-			
+
 			InputStream input = resp.getEntity().getContent();
-			
+
 			List<ClassNotFoundException> classNotFoundExceptions = new ArrayList<ClassNotFoundException>();
-			
+
 			SerializationPolicy whitelist = SerializationPolicyLoader.loadFromStream(input, classNotFoundExceptions);
-		  
+
 			return whitelist;
-			
+
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
