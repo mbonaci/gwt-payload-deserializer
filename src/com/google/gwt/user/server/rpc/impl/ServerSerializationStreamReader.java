@@ -274,7 +274,7 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 		 * Convert a BoundedList to an array of the correct type. This
 		 * implementation consumes the BoundedList.
 		 */
-		 protected Object toArray(Class<?> componentType, BoundedList<Object> buffer) throws SerializationException {
+		protected Object toArray(Class<?> componentType, BoundedList<Object> buffer) throws SerializationException {
 			if (buffer.getExpectedSize() != buffer.size()) {
 				throw new SerializationException(
 						"Inconsistent number of elements received. Received "
@@ -288,15 +288,15 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 			}
 
 			return arr;
-		 }
+		}
 
-		 Object read(ServerSerializationStreamReader stream, BoundedList<Object> instance) throws SerializationException {
-			 for (int i = 0, n = instance.getExpectedSize(); i < n; ++i) {
-				 instance.add(readSingleValue(stream));
-			 }
+		Object read(ServerSerializationStreamReader stream, BoundedList<Object> instance) throws SerializationException {
+			for (int i = 0, n = instance.getExpectedSize(); i < n; ++i) {
+				instance.add(readSingleValue(stream));
+			}
 
-			 return toArray(instance.getComponentType(), instance);
-		 }
+			return toArray(instance.getComponentType(), instance);
+		}
 	}
 
 	/**
@@ -359,17 +359,17 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 
 	public Object deserializeValue(Class<?> type) throws SerializationException {
 		Object tmpObj;
-		
+
 		ValueReader valueReader = CLASS_TO_VALUE_READER.get(type);
 		if (valueReader != null) {
-			
+
 			tmpObj = valueReader.readValue(this);
-			
+
 			PayloadDeserializer.appendToFile("\t" + type.getSimpleName());
 			if(!skipPrintingValue){
 				PayloadDeserializer.appendToFile("\t" + tmpObj);
 			}
-			
+
 			return tmpObj;
 		} else {
 			// Arrays of primitive or reference types need to go through readObject.
@@ -378,7 +378,7 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 			if(tmpObj == null){
 				PayloadDeserializer.appendToFile("\t" + type.getSimpleName() + "\tnull");
 			}
-			
+
 			return tmpObj;
 		}
 	}
@@ -425,7 +425,7 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 		// Write the serialization policy info
 		String moduleBaseURL = readString();		
 		String strongName = readString();
-		
+
 		if (serializationPolicyProvider != null) {
 			serializationPolicy = serializationPolicyProvider.getSerializationPolicy(moduleBaseURL, strongName);
 
@@ -469,7 +469,7 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 			throw getNumberFormatException(value, "int", Integer.MIN_VALUE, Integer.MAX_VALUE);
 		}
 	}
-	
+
 	public int peekInt() throws SerializationException {
 		String value = peek();
 		try {
@@ -500,7 +500,7 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 		int tmpInt = readInt();
 		return getString(tmpInt);
 	}
-	
+
 	public String peekString() throws SerializationException {
 		return getString(peekInt());
 	}
@@ -508,42 +508,43 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 	@Override
 	protected Object deserialize(String typeSignature) throws SerializationException {
 		Object instance = null;
-//		PayloadDeserializer.appendToFile("\n************* starting to deserialize " + typeSignature + "***************\n");
+		//		PayloadDeserializer.appendToFile("\n************* starting to deserialize " + typeSignature + "***************\n");
 		PayloadDeserializer.appendToFile("\t" + typeSignature + "\t");
 		try {
 			Class<?> instanceClass;
-			//      if (hasFlags(FLAG_ELIDE_TYPE_NAMES)) {
-			//        if (getSerializationPolicy() instanceof TypeNameObfuscator) {
-			//          TypeNameObfuscator obfuscator = (TypeNameObfuscator) getSerializationPolicy();
-			//          String instanceClassName = obfuscator.getClassNameForTypeId(typeSignature);
-			//          instanceClass = Class.forName(instanceClassName, false, classLoader);
-			//        } else {
-			//          throw new SerializationException(
-			//              "The GWT module was compiled with RPC type name elision enabled, but "
-			//                  + getSerializationPolicy().getClass().getName()
-			//                  + " does not implement " + TypeNameObfuscator.class.getName());
-			//        }
-			//      } else {
-			
-			SerializedInstanceReference serializedInstRef = SerializabilityUtil.decodeSerializedInstanceReference(typeSignature);
-			instanceClass = Class.forName(serializedInstRef.getName(), false, classLoader);
-			
-			//        validateTypeVersions(instanceClass, serializedInstRef);
-			// }
+			if (hasFlags(FLAG_ELIDE_TYPE_NAMES)) {
+				if (getSerializationPolicy() instanceof TypeNameObfuscator) {
+					TypeNameObfuscator obfuscator = (TypeNameObfuscator) getSerializationPolicy();
+					String instanceClassName = obfuscator.getClassNameForTypeId(typeSignature);
+					instanceClass = Class.forName(instanceClassName, false, classLoader);
+				} else {
+					throw new SerializationException(
+							"The GWT module was compiled with RPC type name elision enabled, but "
+							+ getSerializationPolicy().getClass().getName()
+							+ " does not implement " + TypeNameObfuscator.class.getName());
+				}
+			} else {
+
+				SerializedInstanceReference serializedInstRef = SerializabilityUtil.decodeSerializedInstanceReference(typeSignature);
+				instanceClass = Class.forName(serializedInstRef.getName(), false, classLoader);
+
+				// compare type signatures (client and server types has to be of the same version)
+				validateTypeVersions(instanceClass, serializedInstRef);
+			}
 
 			assert (serializationPolicy != null);
 
-//			serializationPolicy.validateDeserialize(instanceClass);
+			// If application server is not accessible -> whitelist wont be loaded -> skip validation 
+			if(PayloadDeserializer.IS_SERVER_ACCESSIBLE){
+				serializationPolicy.validateDeserialize(instanceClass);
+			}
 
 			Class<?> customSerializer = SerializabilityUtil.hasCustomFieldSerializer(instanceClass);
 
 			int index = reserveDecodedObjectIndex();
 
 			instance = instantiate(customSerializer, instanceClass);
-			
-//			PayloadDeserializer.appendToFile("type = " + instance.getClass().getName() + "\n");
-//			PayloadDeserializer.appendToFile("value = " + instance.toString() + "\n");
-			
+
 			rememberDecodedObject(index, instance);
 
 			Object replacement = deserializeImpl(customSerializer, instanceClass, instance);
@@ -605,14 +606,14 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 	}
 
 	private void deserializeClass(Class<?> instanceClass, Object instance) 
-			throws SerializationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
+	throws SerializationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
 		/**
 		 * A map from field names to corresponding setter methods. The reference
 		 * will be null for classes that do not require special handling for
 		 * server-only fields.
 		 */
 		Map<String, Method> setters = null;
-//		PayloadDeserializer.appendToFile("token index = " + tokenListIndex + "\n");
+		//		PayloadDeserializer.appendToFile("token index = " + tokenListIndex + "\n");
 
 		/**
 		 * A list of fields of this class known to the client. If null, assume the class is not
@@ -656,20 +657,20 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 			}
 
 			String s = declField.getDeclaringClass().getName();
-			
+
 			skipPrintingValue = true;
 			Object value = deserializeValue(declField.getType());
 			skipPrintingValue = false;
-			
+
 			if(value == null){
 				PayloadDeserializer.appendToFile("\t" + declField.getType().getSimpleName());	
 			}
-			
+
 			PayloadDeserializer.appendToFile("\t" + s.substring(s.lastIndexOf('.') + 1) + ".");
 			PayloadDeserializer.appendToFile(declField.getName()+ "\t\t");
-//			PayloadDeserializer.appendToFile("\t\t" + declField.getType().getName() + "\ttab\t");
+			//			PayloadDeserializer.appendToFile("\t\t" + declField.getType().getName() + "\ttab\t");
 			PayloadDeserializer.appendToFile("\t" + (value == null ? "null" : value.toString()));
-//			PayloadDeserializer.appendToFile("###################################################\n\n");
+			//			PayloadDeserializer.appendToFile("###################################################\n\n");
 
 			String fieldName = declField.getName();
 			Method setter;
@@ -689,7 +690,7 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 					// Override access restrictions
 					declField.setAccessible(true);
 				}
-				
+
 				try{
 					declField.set(instance, value);
 				}catch(Exception e){
@@ -697,11 +698,11 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 					PayloadDeserializer.appendToFile(declField.getName() + ": " + declField.getType().getSimpleName() +
 							" cannot be set to " + value != null ? value.getClass().getSimpleName() : "null");
 				}
-//				if(value == null || value.getClass().isAssignableFrom(declField.getType())){
-//					
-//				}else {
-//					
-//				}
+				//				if(value == null || value.getClass().isAssignableFrom(declField.getType())){
+				//					
+				//				}else {
+				//					
+				//				}
 			}
 		}
 
@@ -712,8 +713,8 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 	}
 
 	private Object deserializeImpl(Class<?> customSerializer, Class<?> instanceClass, Object instance) 
-			throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException,
-			InvocationTargetException, SerializationException, ClassNotFoundException {
+	throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException,
+	InvocationTargetException, SerializationException, ClassNotFoundException {
 
 		if (customSerializer != null) {
 			@SuppressWarnings("unchecked")
@@ -734,14 +735,14 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 		return instance;
 	}
 
-	
+
 	private void deserializeStringTable() throws SerializationException {
 		int typeNameCount = readInt();
-		
+
 		BoundedList<String> buffer = new BoundedList<String>(String.class, typeNameCount);
 		for (int typeNameIndex = 0; typeNameIndex < typeNameCount; ++typeNameIndex) {
 			String str = extract();
-			
+
 			// Change quoted characters back.
 			int idx = str.indexOf('\\');
 			if (idx >= 0) {
@@ -792,8 +793,8 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 	}
 
 	private void deserializeWithCustomFieldDeserializer(Class<?> customSerializer, Class<?> instanceClass, Object instance)
-			throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-		
+	throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+
 		assert (!instanceClass.isArray());
 
 		for (Method method : customSerializer.getMethods()) {
@@ -809,17 +810,17 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 		try {
 			String str = tokenListIndex == 0 ? "" : "\n";
 			PayloadDeserializer.appendToFile(str + tokenListIndex);
-			
+
 			String tmpStr = tokenList.get(tokenListIndex++);
 			PayloadDeserializer.appendToFile("\t=  " + tmpStr);
-			
+
 			return tmpStr;
 
 		} catch (IndexOutOfBoundsException e) {
 			throw new SerializationException("Too few tokens in RPC request", e);
 		}
 	}
-	
+
 	private String peek() throws SerializationException {
 		try {
 			String tmpStr = tokenList.get(tokenListIndex);
@@ -853,7 +854,7 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 				message = "a fractional value";
 			}
 		} catch (NumberFormatException e2) {
-			
+
 		}
 
 		return new NumberFormatException("Expected type '" + type + "' but received " + message + ": " + value);
@@ -896,8 +897,8 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 
 	@SuppressWarnings("rawtypes")
 	private Object instantiate(Class<?> customSerializer, Class<?> instanceClass)
-			throws InstantiationException, IllegalAccessException, IllegalArgumentException, 
-			InvocationTargetException, NoSuchMethodException, SerializationException {
+	throws InstantiationException, IllegalAccessException, IllegalArgumentException, 
+	InvocationTargetException, NoSuchMethodException, SerializationException {
 		if (customSerializer != null) {
 			CustomFieldSerializer customFieldSerializer = SerializabilityUtil.loadCustomFieldSerializer(customSerializer);
 			if (customFieldSerializer == null) {
@@ -929,7 +930,6 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 		}
 	}
 
-	/*
 	private void validateTypeVersions(Class<?> instanceClass, SerializedInstanceReference serializedInstRef) throws SerializationException {
 		String clientTypeSignature = serializedInstRef.getSignature();
 		if (clientTypeSignature.length() == 0) {
@@ -942,9 +942,8 @@ public class ServerSerializationStreamReader extends AbstractSerializationStream
 			throw new SerializationException("Invalid type signature for " + instanceClass.getName());
 		}
 	}
-	*/
 
-	
+
 
 	public ArrayList<String> getTokenList() {
 		return tokenList;

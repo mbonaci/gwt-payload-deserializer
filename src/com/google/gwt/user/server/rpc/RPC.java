@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.server.rpc;
 
+import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RpcToken;
@@ -23,6 +24,7 @@ import com.google.gwt.user.client.rpc.impl.AbstractSerializationStream;
 import com.google.gwt.user.server.rpc.impl.LegacySerializationPolicy;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamWriter;
+import com.google.gwt.user.server.rpc.impl.TypeNameObfuscator;
 
 import hr.ecs.gwt.util.PayloadDeserializer;
 
@@ -241,18 +243,19 @@ public final class RPC {
 			}
 
 			// Read the name of the RemoteService interface
-//			String serviceIntfName = maybeDeobfuscate(streamReader, streamReader.readString());
-			String serviceIntfName = streamReader.readString();
+			String serviceIntfName = maybeDeobfuscate(streamReader, streamReader.readString());
+			// if your classes are not obfuscated you can comment the line above and uncomment the line bellow (not necessary)
+			//			String serviceIntfName = streamReader.readString();
 
-			//      if (type != null) {
-			//        if (!implementsInterface(type, serviceIntfName)) {
-			//          // The service does not implement the requested interface
-			//          throw new IncompatibleRemoteServiceException(
-			//              "Blocked attempt to access interface '" + serviceIntfName
-			//                  + "', which is not implemented by '" + printTypeName(type)
-			//                  + "'; this is either misconfiguration or a hack attempt");
-			//        }
-			//      }
+			if (type != null) {
+				if (!implementsInterface(type, serviceIntfName)) {
+					// The service does not implement the requested interface
+					throw new IncompatibleRemoteServiceException(
+							"Blocked attempt to access interface '" + serviceIntfName
+							+ "', which is not implemented by '" + printTypeName(type)
+							+ "'; this is either misconfiguration or a hack attempt");
+				}
+			}
 
 			SerializationPolicy serializationPolicy = streamReader.getSerializationPolicy();
 			Class<?> serviceIntf;
@@ -262,7 +265,7 @@ public final class RPC {
 					// The requested interface is not a RemoteService interface
 					throw new IncompatibleRemoteServiceException(
 							"Blocked attempt to access interface '" + printTypeName(serviceIntf) +
-							"', which doesn't extend RemoteService; this is either misconfiguration or a hack attempt");
+					"', which doesn't extend RemoteService; this is either misconfiguration or a hack attempt");
 				}
 			} catch (ClassNotFoundException e) {
 				throw new IncompatibleRemoteServiceException(
@@ -278,9 +281,10 @@ public final class RPC {
 			Class<?>[] parameterTypes = new Class[paramCount];
 
 			for (int i = 0; i < parameterTypes.length; i++) {
-//				String paramClassName = maybeDeobfuscate(streamReader, streamReader.readString());
-				String paramClassName = streamReader.readString();
-				
+				String paramClassName = maybeDeobfuscate(streamReader, streamReader.readString());
+				// if your classes are not obfuscated you can comment the line above and uncomment the line bellow (not necessary)
+				//				String paramClassName = streamReader.readString();
+
 				try {
 					parameterTypes[i] = getClassFromSerializedName(paramClassName, classLoader);
 				} catch (ClassNotFoundException e) {
@@ -296,8 +300,8 @@ public final class RPC {
 					PayloadDeserializer.appendToFile("\n####################\t\t\t param " + (i + 1) + "\t\t\t####################");
 					parameterValues[i] = streamReader.deserializeValue(parameterTypes[i]);
 				}
-//				PayloadDeserializer.appendToFile("\t" + parameterTypes[parameterTypes.length - 1].getSimpleName());
-//				PayloadDeserializer.appendToFile("\t\t" + parameterValues[parameterTypes.length - 1]);
+				//				PayloadDeserializer.appendToFile("\t" + parameterTypes[parameterTypes.length - 1].getSimpleName());
+				//				PayloadDeserializer.appendToFile("\t\t" + parameterValues[parameterTypes.length - 1]);
 				return new RPCRequest(method, parameterValues, rpcToken, serializationPolicy, streamReader.getFlags());
 
 			} catch (NoSuchMethodException e) {
@@ -719,92 +723,92 @@ public final class RPC {
 	 * Used to determine whether the specified interface name is implemented by
 	 * the service class. This is done without loading the class (for security).
 	 */
-//	private static boolean implementsInterface(Class<?> service, String intfName) {
-//		synchronized (serviceToImplementedInterfacesMap) {
-//			// See if it's cached.
-//			//
-//			Set<String> interfaceSet = serviceToImplementedInterfacesMap.get(service);
-//			if (interfaceSet != null) {
-//				if (interfaceSet.contains(intfName)) {
-//					return true;
-//				}
-//			} else {
-//				interfaceSet = new HashSet<String>();
-//				serviceToImplementedInterfacesMap.put(service, interfaceSet);
-//			}
-//
-//			if (!service.isInterface()) {
-//				while ((service != null) && !RemoteServiceServlet.class.equals(service)) {
-//					Class<?>[] intfs = service.getInterfaces();
-//					for (Class<?> intf : intfs) {
-//						if (implementsInterfaceRecursive(intf, intfName)) {
-//							interfaceSet.add(intfName);
-//							return true;
-//						}
-//					}
-//
-//					// did not find the interface in this class so we look in the
-//					// superclass
-//					//
-//					service = service.getSuperclass();
-//				}
-//			} else {
-//				if (implementsInterfaceRecursive(service, intfName)) {
-//					interfaceSet.add(intfName);
-//					return true;
-//				}
-//			}
-//
-//			return false;
-//		}
-//	}
+	private static boolean implementsInterface(Class<?> service, String intfName) {
+		synchronized (serviceToImplementedInterfacesMap) {
+			// See if it's cached.
+			//
+			Set<String> interfaceSet = serviceToImplementedInterfacesMap.get(service);
+			if (interfaceSet != null) {
+				if (interfaceSet.contains(intfName)) {
+					return true;
+				}
+			} else {
+				interfaceSet = new HashSet<String>();
+				serviceToImplementedInterfacesMap.put(service, interfaceSet);
+			}
+
+			if (!service.isInterface()) {
+				while ((service != null) && !RemoteServiceServlet.class.equals(service)) {
+					Class<?>[] intfs = service.getInterfaces();
+					for (Class<?> intf : intfs) {
+						if (implementsInterfaceRecursive(intf, intfName)) {
+							interfaceSet.add(intfName);
+							return true;
+						}
+					}
+
+					// did not find the interface in this class so we look in the
+					// superclass
+					//
+					service = service.getSuperclass();
+				}
+			} else {
+				if (implementsInterfaceRecursive(service, intfName)) {
+					interfaceSet.add(intfName);
+					return true;
+				}
+			}
+
+			return false;
+		}
+	}
 
 	/**
 	 * Only called from implementsInterface().
 	 */
-//	private static boolean implementsInterfaceRecursive(Class<?> clazz, String intfName) {
-//		assert (clazz.isInterface());
-//
-//		if (clazz.getName().equals(intfName)) {
-//			return true;
-//		}
-//
-//		// search implemented interfaces
-//		Class<?>[] intfs = clazz.getInterfaces();
-//		for (Class<?> intf : intfs) {
-//			if (implementsInterfaceRecursive(intf, intfName)) {
-//				return true;
-//			}
-//		}
-//
-//		return false;
-//	}
+	private static boolean implementsInterfaceRecursive(Class<?> clazz, String intfName) {
+		assert (clazz.isInterface());
+
+		if (clazz.getName().equals(intfName)) {
+			return true;
+		}
+
+		// search implemented interfaces
+		Class<?>[] intfs = clazz.getInterfaces();
+		for (Class<?> intf : intfs) {
+			if (implementsInterfaceRecursive(intf, intfName)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	/**
 	 * Given a type identifier in the stream, attempt to deobfuscate it. Retuns
 	 * the original identifier if deobfuscation is unnecessary or no mapping is
 	 * known.
 	 */
-//	private static String maybeDeobfuscate(ServerSerializationStreamReader streamReader, String name) throws SerializationException {
-//		int index;
-//		if (streamReader.hasFlags(AbstractSerializationStream.FLAG_ELIDE_TYPE_NAMES)) {
-//			SerializationPolicy serializationPolicy = streamReader.getSerializationPolicy();
-//			if (!(serializationPolicy instanceof TypeNameObfuscator)) {
-//				throw new IncompatibleRemoteServiceException(
-//						"RPC request was encoded with obfuscated type names, "
-//						+ "but the SerializationPolicy in use does not implement "
-//						+ TypeNameObfuscator.class.getName());
-//			}
-//
-//			String maybe = ((TypeNameObfuscator) serializationPolicy).getClassNameForTypeId(name);
-//			if (maybe != null) {
-//				return maybe;
-//			}
-//		} else if ((index = name.indexOf('/')) != -1) {
-//			return name.substring(0, index);
-//		}
-//		return name;
-//	}
+	private static String maybeDeobfuscate(ServerSerializationStreamReader streamReader, String name) throws SerializationException {
+		int index;
+		if (streamReader.hasFlags(AbstractSerializationStream.FLAG_ELIDE_TYPE_NAMES)) {
+			SerializationPolicy serializationPolicy = streamReader.getSerializationPolicy();
+			if (!(serializationPolicy instanceof TypeNameObfuscator)) {
+				throw new IncompatibleRemoteServiceException(
+						"RPC request was encoded with obfuscated type names, "
+						+ "but the SerializationPolicy in use does not implement "
+						+ TypeNameObfuscator.class.getName());
+			}
+
+			String maybe = ((TypeNameObfuscator) serializationPolicy).getClassNameForTypeId(name);
+			if (maybe != null) {
+				return maybe;
+			}
+		} else if ((index = name.indexOf('/')) != -1) {
+			return name.substring(0, index);
+		}
+		return name;
+	}
 
 	/**
 	 * Straight copy from
