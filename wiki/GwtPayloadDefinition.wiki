@@ -39,7 +39,7 @@ type serialization signature **:	[The signature ensures that both the client and
 					If the signature sent by the client does not match the server’s signature for the class, 
 					the server will throw an IncompatibleRemoteServiceException]
 
-Type designations ***:
+Type designation ***:
 I - int
 Z - boolean
 J - long
