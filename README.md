@@ -1,5 +1,11 @@
 ## gwt-payload-deserializer
 
+<small>
+Automatically exported from code.google.com/p/gwt-payload-deserializer on 2015.03.30
+Originally developed in 2010 during a performance testing gig.
+</small>
+
+
 Project was fast-and-furiously developed for the purpose of translating and understanding _GWT_ payload components. 
 Requests were previously intercepted and the payload saved by _jMeter's Proxy server_. 
 The final goal was to parameterize _GWT RPC_ calls (during performance testing of a _GWT_ application), so the results 
@@ -19,18 +25,13 @@ To set this bitch up in _Eclipse_:
  ```
  
 Then, when you run/debug `PayloadDeserializer` class, _Eclipse_ will prompt you with two dialogs.  
-First one is for your payload and the second one is for destination file path of the output file,  
-where the parsed payload will be stored.
+First one is for your payload and the second one is for destination file path of the output file, where the parsed payload will be stored.
 
-If you are having problems with pasting payload into _Eclipse_ dialog, as a quick-and-dirty fix, 
-you can temporarily hard code your payload's value in the `PayloadDeserializer Main`'s local variable (as shown in the code).  
+If you are having problems with pasting payload into _Eclipse_ dialog, as a quick-and-dirty fix, you can temporarily hard code your payload's value in the `PayloadDeserializer Main`'s local variable (as shown in the code).
 
-Finally, sorry for the mess in the code, I really had very limited time for load testing, otherwise I would have,  
-as the proper solution to the problem, developed _jMeter_ plugin for gwt rpc parametrization.
+Finally, sorry for the mess in the code, I really had very limited time for load testing so I had to patch things up like this. If I have had the proper timeline I would've, as the proper solution to the problem, developed _jMeter_ plugin for gwt rpc parametrization.
 
-Anyway, I hope this'll help someone...
+Anyway, what's done is done, I'd rather help someone and feel a bit of shame, than to lock this down and leave others to struggle, as I did. 
 
+I really hope this helps someone...
 
-<small>
-Automatically exported from code.google.com/p/gwt-payload-deserializer on 2015.03.30
-</small>
