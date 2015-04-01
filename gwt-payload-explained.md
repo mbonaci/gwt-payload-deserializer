@@ -27,14 +27,16 @@
 1|			    {third param's value}
 
 
-whitelist hash *:			        [The hash is used to load the whitelist of objects that can be deserialized.
-					url/hash.gwt.rpc is a viewable url, 
-					that may provide some useful insight about the datatypes used by the GWT application.]
+whitelist hash *:
+        [The hash is used to load the whitelist of objects that can be deserialized.
+		url/hash.gwt.rpc is a viewable url, that may provide some useful insight 
+		about the datatypes used by the GWT application.]
 										
-type serialization signature **:	[The signature ensures that both the client and server are working on the same instance of the class. 
-					Similar to serialVersionUID, but generated using type members (crc).
-					If the signature sent by the client does not match the server’s signature for the class, 
-					the server will throw an IncompatibleRemoteServiceException]
+type serialization signature **:
+        [The signature ensures that both the client and server are working on the 
+        same instance of the class. Similar to serialVersionUID, but generated using 
+        type members (crc). If the signature sent by the client does not match the 
+        server’s signature for the class, the server will throw IncompatibleRemoteServiceException]
 
 Type designations ***:
 I - int
