@@ -32,5 +32,5 @@ If you are having problems with pasting payload into _Eclipse_ dialog, as a quic
 Finally, sorry for the mess in the code, I really had very limited time for load testing so I had to patch things up like this. If I have had the proper timeline I would've, as the proper solution to the problem, developed _jMeter_ plugin for gwt rpc parametrization.
 
 
-I hope this helps someone...
+Anyway, I hope this helps someone...
 
